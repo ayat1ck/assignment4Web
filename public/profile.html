@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Authentication System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>User Profile</h1>
+                <p>Your account information</p>
+            </div>
+
+            <div id="message"></div>
+            <div id="profileContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const messageDiv = document.getElementById('message');
+        const profileContent = document.getElementById('profileContent');
+
+        async function loadProfile() {
+            profileContent.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading profile...</p>
+        </div>
+      `;
+
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayProfile(data.user);
+                } else {
+                    showMessage(data.message, 'error');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                }
+            } catch (error) {
+                showMessage('An error occurred. Please try again.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            }
+        }
+
+        function displayProfile(user) {
+            const createdDate = new Date(user.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            profileContent.innerHTML = `
+        <div class="profile-info">
+          <h2>Account Details</h2>
+          <div class="info-row">
+            <span class="info-label">Name</span>
+            <span class="info-value">${user.name}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-value">${user.email}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Member Since</span>
+            <span class="info-value">${createdDate}</span>
+          </div>
+        </div>
+        <button onclick="logout()" class="btn">Logout</button>
+      `;
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('An error occurred. Please try again.', 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            messageDiv.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load profile on page load
+        loadProfile();
+    </script>
+</body>
+
+</html>
